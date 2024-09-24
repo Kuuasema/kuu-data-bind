@@ -1,0 +1,19 @@
+{
+    "name": "kuuasema.data-bind.editor",
+    "rootNamespace": "Kuuasema.DataBinding",
+    "references": [
+        "GUID:2b067b19c009d4e5fa5cb3df58baa7d5",
+        "GUID:9e24947de15b9834991c9d8411ea37cf",
+        "GUID:7c227596f76d9436b8520ace9bfaee88",
+        "GUID:5b6102e37bbca4e88b55a89914f53d84"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

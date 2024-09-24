@@ -1,0 +1,24 @@
+{
+  "name": "com.kuuasema.rtt-engine-data-bind",
+  "version": "1.0.0",
+  "displayName": "rtt-engine-data-bind",
+  "description": "rtt-engine-data-bind",
+  "unity": "2020.1",
+  "unityRelease": "0f1",
+  "documentationUrl": "https://kuuasema.com/",
+  "changelogUrl": "https://kuuasema.com/changelog.html",
+  "licensesUrl": "https://kuuasema.com/licensing.html",
+  "dependencies": {
+    "com.kuuasema.rtt-engine-utils": "1.0.0"
+ },
+ "keywords": [
+    "Kuuasema",
+    "RTT Engine",
+    "Data Bind"
+  ],
+  "author": {
+    "name": "Kuuasema",
+    "email": "@kuuasema.com",
+    "url": "https://www.kuuasema.com"
+  }
+}
