@@ -21,6 +21,8 @@ FEATURES
 DDMVM
 ------------
 
+![Data Model View](doc/dmv.png)
+
 
 This data binding framework is tailored for Unity's MonoBehaviours.  
 It is based on the premise that anything can be data by adding data bind attributes to fields.
