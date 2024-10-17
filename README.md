@@ -154,7 +154,7 @@ this.DataModel.A.SetValue("Bye!");
 
 Important Considerations
 ------------
-**Data Authority**
+**Data Authority**  
 *Should I modify the underlaying Data, or the Data Model?*  
 > - The system does not poll for changes in the underlaying fields of the data object, obviously for performance reasons. It can though, trough a call to *Reload*, read the underlaying field again. Similarly with a call to *Flush* it will write into the field of the data object.  
 > - So it can be said that by default, the field is read only once and never written into. A call to *Flush* should be made for example before serializing the data object. A call on the top level is sufficient because the *Flush* and *Reload* calls are recursive.  
@@ -239,6 +239,7 @@ public class WeaponModel : DataModel<Weapon> {
 }
 
 public class WeaponActionModel : DataModel<WeaponAction> {
+	/// THIS INHERITS CURRENT FIRE MODE
 	[PropertyInherit] public DataModel<FireMode> CurrentMode { get; private set; }
 }
 
