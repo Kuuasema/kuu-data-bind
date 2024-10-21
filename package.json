@@ -1,6 +1,6 @@
 {
   "name": "com.kuuasema.data-bind",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "kuu-data-bind",
   "description": "kuu-data-bind",
   "unity": "2020.1",
@@ -10,8 +10,8 @@
   "licensesUrl": "https://kuuasema.com/licensing.html",
   "dependencies": {
     "com.kuuasema.utils": "1.0.0"
- },
- "keywords": [
+  },
+  "keywords": [
     "Kuuasema",
     "Data Bind"
   ],
