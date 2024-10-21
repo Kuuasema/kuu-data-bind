@@ -5,9 +5,9 @@
   "description": "kuu-data-bind",
   "unity": "2020.1",
   "unityRelease": "0f1",
-  "documentationUrl": "https://kuuasema.com/",
-  "changelogUrl": "https://kuuasema.com/changelog.html",
-  "licensesUrl": "https://kuuasema.com/licensing.html",
+  "documentationUrl": "https://github.com/Kuuasema/kuu-data-bind/tree/master/Documentation~",
+  "changelogUrl": "https://github.com/Kuuasema/kuu-data-bind/blob/master/CHANGELOG.md",
+  "licensesUrl": "https://github.com/Kuuasema/kuu-data-bind/blob/master/LICENSE.md",
   "dependencies": {
     "com.kuuasema.utils": "1.0.0"
   },
