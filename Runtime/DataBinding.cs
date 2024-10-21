@@ -276,22 +276,32 @@ namespace Kuuasema.DataBinding {
         * Discover models is called as one of the very first things as the application starts (the InitializeStatic attibute).
         * It will find in the application assembly all the DataModel classes that exist and create the basic data type mapping.
         */
-        [InitializeStatic(0)]
+        [InitializeStatic(-1)]
         private static void DiscoverModels() {
             Type dataModelType = typeof(DataModel<>);
-            Assembly assembly =  Assembly.GetAssembly(dataModelType);
-            foreach (Type type in assembly.GetTypes()) {
-                // We can autuomatically extract custom models, but that gives less control
-                if (IsSubclassOfRawGeneric(dataModelType, type, out Type genericParameter)) {
-                    ModelTypeMap[genericParameter] = type;
-                }
-            }
-            foreach (Type type in assembly.GetTypes()) {
-                // Get custom models from attributes
-                CustomDataModelAttribute attribute  = Attribute.GetCustomAttribute(type, typeof(CustomDataModelAttribute)) as CustomDataModelAttribute;
-                if (attribute != null) {
-                    CustomModelTypeMap[attribute.Type] = type;
-                    ModelTypeMap[attribute.Type] = type;
+            Assembly dataAssembly = Assembly.GetAssembly(dataModelType);
+            Assembly[] allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            
+            foreach (Assembly assembly in allAssemblies) {
+
+                foreach (AssemblyName referencedAssembly in assembly.GetReferencedAssemblies()) {
+                    
+                    if (referencedAssembly.FullName == dataAssembly.FullName) {
+                        foreach (Type type in assembly.GetTypes()) {
+                            // We can autuomatically extract custom models, but that gives less control
+                            if (IsSubclassOfRawGeneric(dataModelType, type, out Type genericParameter)) {
+                                ModelTypeMap[genericParameter] = type;
+                            }
+                        }
+                        foreach (Type type in assembly.GetTypes()) {
+                            // Get custom models from attributes
+                            CustomDataModelAttribute attribute  = Attribute.GetCustomAttribute(type, typeof(CustomDataModelAttribute)) as CustomDataModelAttribute;
+                            if (attribute != null) {
+                                CustomModelTypeMap[attribute.Type] = type;
+                                ModelTypeMap[attribute.Type] = type;
+                            }
+                        }
+                    }
                 }
             }
         }
