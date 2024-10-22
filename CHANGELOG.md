@@ -1,7 +1,7 @@
 1.0.2
 ==============
 - Added InputFieldTextViewModel
-- Added Sample1 
+- Added Sample1, Sample2 
 
 
 1.0.1
