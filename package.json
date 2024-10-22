@@ -19,5 +19,12 @@
     "name": "Kuuasema",
     "email": "@kuuasema.com",
     "url": "https://www.kuuasema.com"
-  }
+  },
+  "samples": [
+    {
+        "displayName": "Sample 1",
+        "description": "Most basic databinding example. One string field bound to two views, a text and an input.",
+        "path": "Samples~/Sample1"
+    }
+  ]
 }
