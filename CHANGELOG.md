@@ -1,8 +1,10 @@
+
+
 1.0.2
 ==============
 - Added InputFieldTextViewModel
-- Added Sample1, Sample2 
-
+- Added Sample1, Sample2, Sample3 
+- Improved assembly detection
 
 1.0.1
 ==============

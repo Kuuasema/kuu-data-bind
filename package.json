@@ -30,6 +30,11 @@
       "displayName": "Sample 2",
       "description": "Most basic databinding example. One string field bound to two views, a text and an input. Alternative and more compact model structure.",
       "path": "Samples~/Sample2"
+    },
+    {
+      "displayName": "Sample 3",
+      "description": "Large databinding example. Full UI with real use cases.",
+      "path": "Samples~/Sample3"
     }
   ]
 }
