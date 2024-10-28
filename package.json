@@ -1,6 +1,6 @@
 {
   "name": "com.kuuasema.data-bind",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "displayName": "kuu-data-bind",
   "description": "kuu-data-bind",
   "unity": "2020.1",
@@ -19,5 +19,22 @@
     "name": "Kuuasema",
     "email": "@kuuasema.com",
     "url": "https://www.kuuasema.com"
-  }
+  },
+  "samples": [
+    {
+        "displayName": "Sample 1",
+        "description": "Most basic databinding example. One string field bound to two views, a text and an input.",
+        "path": "Samples~/Sample1"
+    },
+    {
+      "displayName": "Sample 2",
+      "description": "Most basic databinding example. One string field bound to two views, a text and an input. Alternative and more compact model structure.",
+      "path": "Samples~/Sample2"
+    },
+    {
+      "displayName": "Sample 3",
+      "description": "Large databinding example. Full UI with real use cases.",
+      "path": "Samples~/Sample3"
+    }
+  ]
 }
