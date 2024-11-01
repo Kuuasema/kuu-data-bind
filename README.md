@@ -5,6 +5,7 @@ ABOUT
 ------------
 This package contains a data binding system.  
 It depends on the Utils package.  
+This package and its related source code files are licensed under the terms of the <script src="LICENSE.md">MIT license</script>.
 
 SETUP
 ------------
