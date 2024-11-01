@@ -5,6 +5,7 @@ ABOUT
 ------------
 This package contains a data binding system.  
 It depends on the Utils package.  
+This package and its related source code files are licensed under the terms of the [MIT license](LICENSE.md).
 
 SETUP
 ------------
@@ -21,7 +22,7 @@ FEATURES
 DDMVM(V)
 ------------
 
-![Data Model View](doc/dmv.png)
+![Data Model View](Documentation~/dmv.png)
 
 
 This data binding framework is tailored for Unity's MonoBehaviours.  
