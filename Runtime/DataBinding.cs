@@ -385,6 +385,7 @@ namespace Kuuasema.DataBinding {
         internal virtual void Bind(object data, DataModel parent) { }
         internal virtual void Bind<D>(D data, DataModel parent) { }
         internal virtual void BindInheritedProperties(DataModel parent) { }
+        protected virtual void OnBound() {}
         public void Bind(object data) { 
             this.Bind(data, null);
         }
@@ -743,6 +744,8 @@ namespace Kuuasema.DataBinding {
         protected virtual void Bind(T data, DataModel parent) {
             this.BindInternal(data, parent);
             this.BindInheritedProperties(parent);
+
+            this.OnBound();
         }
 
         /**
@@ -754,10 +757,6 @@ namespace Kuuasema.DataBinding {
                 // data is not primitive, ie. class or such then additional hierarchial actions are needed
                 if (data == null) {
                     // data was nulled
-                    // notify observers of null value
-                    if (this.OnValueUpdated != null) {
-                        this.OnValueUpdated(default(T));
-                    }
                     foreach (Delegate _action in this.boundActions) {
                         Action<T> action = (Action<T>) _action;
                         action(default(T));
@@ -834,6 +833,11 @@ namespace Kuuasema.DataBinding {
                     property.SetValue(this, model);
                     #endif
                 }
+            }
+
+            // notify on binding
+            if (this.OnValueUpdated != null) {
+                this.OnValueUpdated(this.Value);
             }
         }
 
