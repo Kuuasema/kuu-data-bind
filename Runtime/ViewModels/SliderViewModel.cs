@@ -1,8 +1,6 @@
-using Kuuasema.DataBinding;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class SliderViewModel : ViewModel<float>, IPointerDownHandler, IPointerUpHandler {
         [ViewBind]
         private Slider slider;

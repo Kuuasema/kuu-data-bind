@@ -1,7 +1,5 @@
-using Kuuasema.DataBinding;
 using TMPro;
-
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class ShortCounterViewModel : ViewModel<ushort> {
         [ViewBind]
         private TextMeshProUGUI text;

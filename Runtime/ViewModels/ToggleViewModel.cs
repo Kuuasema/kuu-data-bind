@@ -1,6 +1,4 @@
-using Kuuasema.DataBinding;
 using UnityEngine.UI;
-
 namespace Kuuasema.DataBinding {
     public class ToggleViewModel : ViewModel<bool> {
 

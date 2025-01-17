@@ -1,4 +1,11 @@
+1.0.4
+==============
+- Added IntSliderViewModel, FormattedStringViewModel
+- Fixed namespace for viewmodels
 
+1.0.3
+==============
+- Updated license and readme
 
 1.0.2
 ==============

@@ -1,7 +1,5 @@
-
 using UnityEngine;
-using Kuuasema.DataBinding;
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class LocalRotationAngleViewModel : ViewModel<float> {
 
         protected override void OnBound() {

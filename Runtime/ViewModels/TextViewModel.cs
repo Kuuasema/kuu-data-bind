@@ -1,9 +1,6 @@
-
 using UnityEngine;
-using Kuuasema.DataBinding;
 using TMPro;
-
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class TextViewModel : ViewModel<string> {
         [ViewBind]
         [SerializeField]

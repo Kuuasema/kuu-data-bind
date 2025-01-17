@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using Kuuasema.DataBinding;
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class ButtonViewModel : TextViewModel {
         [ViewBind]
         [SerializeField]

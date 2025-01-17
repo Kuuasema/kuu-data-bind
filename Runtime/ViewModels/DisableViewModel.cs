@@ -1,5 +1,4 @@
-using Kuuasema.DataBinding;
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class DisableViewModel : ViewModel<bool> {
 
         private bool isDisabled;

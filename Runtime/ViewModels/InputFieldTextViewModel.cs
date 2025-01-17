@@ -1,9 +1,6 @@
-
 using UnityEngine;
-using Kuuasema.DataBinding;
 using TMPro;
-
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class InputFieldTextViewModel : ViewModel<string> {
         [ViewBind]
         private TMP_InputField input;

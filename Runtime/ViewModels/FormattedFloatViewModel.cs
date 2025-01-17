@@ -1,8 +1,6 @@
 using System;
-using Kuuasema.DataBinding;
 using TMPro;
-
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class FormattedFloatViewModel : ViewModel<float> {
         public string Format;
         [ViewBind]

@@ -1,8 +1,6 @@
-
 using System.Collections.Generic;
 using UnityEngine;
-using Kuuasema.DataBinding;
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class ToggleColorViewModel : ViewModel<bool> {
 
         [SerializeField]

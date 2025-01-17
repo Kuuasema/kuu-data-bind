@@ -1,7 +1,5 @@
-using Kuuasema.DataBinding;
 using UnityEngine.UI;
-
-namespace Kuuasema.Core {
+namespace Kuuasema.DataBinding {
     public class ImageFillViewModel : ViewModel<float> {
         [ViewBind]
         private Image image;

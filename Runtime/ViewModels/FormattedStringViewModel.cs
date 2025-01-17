@@ -1,9 +1,16 @@
 using System;
+using System.Reflection;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using TMPro;
 namespace Kuuasema.DataBinding {
-    public class FormattedIntegerViewModel : ViewModel<int> {
+    public class FormattedStringViewModel : ViewModel<string> {
         public string Format;
         [ViewBind]
+        // [SerializeField]
         private TextMeshProUGUI text;
         public TextMeshProUGUI Text => this.text;
 
@@ -11,7 +18,7 @@ namespace Kuuasema.DataBinding {
             this.text.text = String.Format(this.Format, this.DataModel.Value);
         }
 
-        protected override void OnValueUpdated(int value) {
+        protected override void OnValueUpdated(string value) {
             this.text.text = String.Format(this.Format, this.DataModel.Value);
         }
     }
