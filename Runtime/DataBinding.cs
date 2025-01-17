@@ -468,6 +468,12 @@ namespace Kuuasema.DataBinding {
         public ValueUpdate OnValueUpdated { get; set; }
         public T Value { get; private set; }
 
+        public void NotifyAll() {
+            if (this.OnValueUpdated != null) {
+                this.OnValueUpdated(this.Value);
+            }
+        }
+
         /**
         * Sets the value in the model and notifies all observers.
         */
