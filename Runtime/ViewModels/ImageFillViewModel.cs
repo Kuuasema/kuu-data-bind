@@ -2,7 +2,7 @@ using UnityEngine.UI;
 namespace Kuuasema.DataBinding {
     public class ImageFillViewModel : ViewModel<float> {
         [ViewBind]
-        private Image image;
+        protected Image image;
         public Image Image => this.image;
 
         protected override void SetupView() { 

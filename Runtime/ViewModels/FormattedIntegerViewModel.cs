@@ -4,7 +4,7 @@ namespace Kuuasema.DataBinding {
     public class FormattedIntegerViewModel : ViewModel<int> {
         public string Format;
         [ViewBind]
-        private TextMeshProUGUI text;
+        protected TextMeshProUGUI text;
         public TextMeshProUGUI Text => this.text;
 
         protected override void SetupView() { 

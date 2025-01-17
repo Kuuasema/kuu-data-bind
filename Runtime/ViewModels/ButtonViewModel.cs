@@ -5,7 +5,7 @@ namespace Kuuasema.DataBinding {
     public class ButtonViewModel : TextViewModel {
         [ViewBind]
         [SerializeField]
-        private Button button;
+        protected Button button;
         public Button Button => this.button;
 
         public UnityEvent<string> onButtonClicked = new UnityEvent<string>();

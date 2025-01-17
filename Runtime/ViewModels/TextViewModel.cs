@@ -4,7 +4,7 @@ namespace Kuuasema.DataBinding {
     public class TextViewModel : ViewModel<string> {
         [ViewBind]
         [SerializeField]
-        private TextMeshProUGUI text;
+        protected TextMeshProUGUI text;
         public TextMeshProUGUI Text => this.text;
 
         protected override void SetupView() { 

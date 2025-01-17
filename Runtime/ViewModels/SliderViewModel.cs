@@ -3,7 +3,7 @@ using UnityEngine.UI;
 namespace Kuuasema.DataBinding {
     public class SliderViewModel : ViewModel<float>, IPointerDownHandler, IPointerUpHandler {
         [ViewBind]
-        private Slider slider;
+        protected Slider slider;
 
         protected override void Awake() {
             base.Awake();

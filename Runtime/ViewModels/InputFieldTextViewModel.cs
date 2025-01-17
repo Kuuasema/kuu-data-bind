@@ -3,7 +3,7 @@ using TMPro;
 namespace Kuuasema.DataBinding {
     public class InputFieldTextViewModel : ViewModel<string> {
         [ViewBind]
-        private TMP_InputField input;
+        protected TMP_InputField input;
         public TMP_InputField InputField => this.input;
 
         private bool inValueUpdate;

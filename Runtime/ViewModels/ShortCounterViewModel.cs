@@ -2,7 +2,7 @@ using TMPro;
 namespace Kuuasema.DataBinding {
     public class ShortCounterViewModel : ViewModel<ushort> {
         [ViewBind]
-        private TextMeshProUGUI text;
+        protected TextMeshProUGUI text;
 
         protected override void SetupView() { 
             this.text.text = $"{this.DataModel.Value}";
