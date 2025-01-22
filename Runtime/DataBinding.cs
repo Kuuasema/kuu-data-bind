@@ -64,6 +64,7 @@ namespace Kuuasema.DataBinding {
         public DataBindAttribute() {}
         public DataBindAttribute(string name) {
             this.Name = name;
+            this.BindField = true;
         }
 
         public DataBindAttribute(bool bindField) {
