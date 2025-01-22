@@ -61,7 +61,9 @@ namespace Kuuasema.DataBinding {
         // unique binding name in the context of the data object
         public string Name;
         public bool BindField;
-        public DataBindAttribute() {}
+        public DataBindAttribute() {
+            this.BindField = true;
+        }
         public DataBindAttribute(string name) {
             this.Name = name;
             this.BindField = true;
