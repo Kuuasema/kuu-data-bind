@@ -236,6 +236,7 @@ namespace Kuuasema.DataBinding {
         protected static Dictionary<Type,Dictionary<FieldInfo,DataBindAttribute>> TypeFieldAttributeMap = new Dictionary<Type,Dictionary<FieldInfo,DataBindAttribute>>();
         // Stores the cutom model mappings for types.
         protected static Dictionary<Type,Type> CustomModelTypeMap = new Dictionary<Type, Type>();
+        protected static Dictionary<Type,Type> CustomTypeModelMap = new Dictionary<Type, Type>();
         // Maps data model methods with their data bind attributes.
         protected static Dictionary<Type,Dictionary<MethodInfo,BindActionAttribute>> TypeMethodAttributeMap = new Dictionary<Type,Dictionary<MethodInfo,BindActionAttribute>>();
         //
@@ -324,6 +325,7 @@ namespace Kuuasema.DataBinding {
                         CustomDataModelAttribute attribute  = Attribute.GetCustomAttribute(type, typeof(CustomDataModelAttribute)) as CustomDataModelAttribute;
                         if (attribute != null) {
                             CustomModelTypeMap[attribute.Type] = type;
+                            CustomTypeModelMap[type] = attribute.Type;
                             ModelTypeMap[attribute.Type] = type;
                         }
                     }
@@ -350,7 +352,7 @@ namespace Kuuasema.DataBinding {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //// INSTANCE ////
         // The following parts belongs to the data model instance.
-        public Type DataType { get; protected set; }
+        public Type DataType { get; internal set; }
         public virtual string ContextKey => null;
 
         // The binding map stores the data models with their binding names
@@ -366,6 +368,18 @@ namespace Kuuasema.DataBinding {
             }
             if (this.BindingMap.TryGetValue(name, out DataModel model)) {
                 return model;
+            }
+            if (name.Contains(".")) {
+                string[] parts = name.Split(".");
+                DataModel _model = this;
+                for (int i = 0; i < parts.Length; i++) {
+                    if (_model.BindingMap.TryGetValue(parts[i], out DataModel __model)) {
+                        _model = __model;
+                    } else {
+                        return null;
+                    }
+                }
+                return _model;
             }
             return null;
         }
@@ -915,6 +929,9 @@ namespace Kuuasema.DataBinding {
         protected virtual void BuildModel() {
             // store the data type
             Type type = typeof(T);
+            if (CustomTypeModelMap.TryGetValue(this.GetType(), out Type _customType)) {
+                type = _customType;
+            }
             this.DataType = type;
 
             // mark if the data is equatable
@@ -1033,6 +1050,9 @@ namespace Kuuasema.DataBinding {
                         Type _poolType = GetGenericPool(_modelType);
                         object model = _poolType.GetMethod("Get").Invoke(null, null);
                         this.BindingMap[attribute.Name] = model as DataModel;
+                        if (CustomModelTypeMap.TryGetValue(_modelType, out Type _type)) {
+                            this.BindingMap[attribute.Name].DataType = _type;
+                        }
                     } else {
                         objectArgs[0] = null;
                         this.BindingMap[attribute.Name] = Activator.CreateInstance(_modelType, objectArgs) as DataModel;
@@ -1452,10 +1472,6 @@ namespace Kuuasema.DataBinding {
 
                     if (!isList && !isViewModel) {
 
-                        if (viewBindAttribute.Name == "TestButton") {
-                            Debug.Log("break");
-                        }
-
                         // field is not a view model, so try find the component on it
                         Component component = field.GetValue(this) as Component;
                         if (component == null) {
@@ -1675,6 +1691,9 @@ namespace Kuuasema.DataBinding {
             this.DataModel.OnValueUpdated += this.OnValueUpdated;
             foreach (KeyValuePair<string,List<ViewModel>> keyVal in this.BindingMap) {
                 string bindingContext = keyVal.Key;
+                if (bindingContext == "Attributes.Something") {
+                    Debug.Log("break");
+                }
                 DataModel data = this.DataModel.Find(bindingContext);
                 if (data != null) {
                     List<ViewModel> boundViews = keyVal.Value;
