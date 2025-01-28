@@ -162,6 +162,15 @@ namespace Kuuasema.DataBinding {
     }    
 
     /**
+    * Class to allow building recursive binding structures.
+    * Mark fields with [SerializeReference] to prevent Unity from automatically instantiating null fields.
+    */
+    [System.Serializable]
+    public class ViewBindings {
+
+    }
+
+    /**
     * The static context map exists for more dynamic data entities to register themselves.
     * For example critical systems should register into here, for scripting and console access.
     * In addition if shorter lived gameplay agents register themselves here they can also be accessed as easily.
