@@ -164,10 +164,140 @@ namespace Kuuasema.DataBinding {
     /**
     * Class to allow building recursive binding structures.
     * Mark fields with [SerializeReference] to prevent Unity from automatically instantiating null fields.
+    * Functionally it is a subset of the ViewModel, intended to be used within ViewModels for grouping views
+    * and offers a way to expose the full binding hierarchy on a single ViewModel.
     */
     [System.Serializable]
     public class ViewBindings {
+        //// STATIC ////
+        // static type mappings
 
+        /**
+        * Maps view model type to field list.
+        */
+        protected static Dictionary<Type,List<FieldInfo>> FieldMap = new Dictionary<Type, List<FieldInfo>>();
+        /**
+        * Maps view model fields with their view bind attributes.
+        */
+        protected static Dictionary<Type,Dictionary<FieldInfo,ViewBindAttribute>> TypeFieldAttributeMap = new Dictionary<Type,Dictionary<FieldInfo,ViewBindAttribute>>();
+        
+
+        // reusable array for reflection
+        private static Type[] typeArgs = new Type[1];
+        
+        //// INSTANCE ////
+
+        public bool IsBuilt { get; private set; }
+
+        /**
+        * Building the view.
+        */
+        public void BuildView(ViewModel parentView, string bindingPath) {
+            if (this.IsBuilt) return;
+            this.IsBuilt = true;
+
+            Type type = this.GetType();
+            List<FieldInfo> fields;
+
+            // setup static mappings
+
+            Dictionary<FieldInfo,ViewBindAttribute> fieldAttributeMap;
+            
+            bool populateFieldAttributeMap = false;
+
+            // create field attribute map for given type
+            if (!TypeFieldAttributeMap.TryGetValue(type, out fieldAttributeMap)) {
+                fieldAttributeMap = new Dictionary<FieldInfo, ViewBindAttribute>();
+                TypeFieldAttributeMap[type] = fieldAttributeMap;
+                populateFieldAttributeMap = true;
+            }
+            
+            // create field mapping for given type
+            if (!FieldMap.TryGetValue(type, out fields)) {
+                FieldInfo[] _fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                fields = new List<FieldInfo>();
+                // filter result so that it only includes these with the attribute
+                // so that the following for loop will be leaner
+                // else we end up checking non bound fields over and over again
+                foreach (FieldInfo field in _fields) {
+                    // get the field attribute from the static map or populate it
+                    ViewBindAttribute viewBindAttribute;
+                    if (populateFieldAttributeMap) {
+                        viewBindAttribute = Attribute.GetCustomAttribute(field, typeof(ViewBindAttribute)) as ViewBindAttribute;
+                        if (viewBindAttribute != null) { 
+                            fieldAttributeMap[field] = viewBindAttribute;
+                        }
+                    } else {
+                        fieldAttributeMap.TryGetValue(field, out viewBindAttribute);
+                    }
+                    if (viewBindAttribute != null) {
+                        // has attribute, store in field list
+                        fields.Add(field);
+                    }
+                }
+                FieldMap[type] = fields;
+            }
+
+            // all mappings have been created
+            // iterate trough the fields and for each view model, set parent to this and build its view
+            for (int i = 0; i < fields.Count; i++) {
+                FieldInfo field = fields[i];
+
+                // we know that [ViewBind] attribute nust be found on field, else it wouldnt been added to the list
+                if (fieldAttributeMap.TryGetValue(field, out ViewBindAttribute viewBindAttribute)) {
+                    ViewModel viewModel;
+
+                    // if the attribute name is empty, inherit from the field name
+                    if (string.IsNullOrWhiteSpace(viewBindAttribute.Name)) {
+                        viewBindAttribute.Name = field.Name;
+                    }
+
+                    string bindPath = viewBindAttribute.Name;
+                    if (!string.IsNullOrWhiteSpace(bindingPath)) {
+                        bindPath = $"{bindingPath}.{viewBindAttribute.Name}";
+                    }
+                    
+                    bool isList = typeof(IList).IsAssignableFrom(field.FieldType);
+                    bool isViewModel = !isList && typeof(ViewModel).IsAssignableFrom(field.FieldType);
+                    bool isBindings = !isList && !isViewModel && typeof(ViewBindings).IsAssignableFrom(field.FieldType);
+
+                    if (isList || isViewModel || isBindings) {
+
+                        // get or create the list of bound views for this attribute
+                        List<ViewModel> boundViews;
+                        if (!parentView.BindingMap.TryGetValue(bindPath, out boundViews)) {
+                            boundViews = GenericPool<List<ViewModel>>.Get();
+                            parentView.BindingMap[bindPath] = boundViews;
+                        }
+
+                        // the field is a list of view models assigned trough the inspector
+                        if (isList) {
+                            IList list = field.GetValue(this) as IList;
+                            foreach (object obj in list) {
+                                viewModel = obj as ViewModel;
+                                if (viewModel != null) {
+                                    //viewModel.SetParentView(this);
+                                    viewModel.BuildView();
+                                    boundViews.Add(viewModel);
+                                }
+                            }
+                        }
+                        // the field is a view model, it can be assigned, if not then discover it
+                        else if (isViewModel) {
+                            viewModel = field.GetValue(this) as ViewModel;
+                            // viewModel.SetParentView(this);
+                            viewModel.BuildView();
+                            boundViews.Add(viewModel);   
+                        } else if (isBindings) {
+                            ViewBindings viewBindings = field.GetValue(this) as ViewBindings;
+                            if (viewBindings != null) {
+                                viewBindings.BuildView(parentView, bindPath);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1276,7 +1406,7 @@ namespace Kuuasema.DataBinding {
         //// INSTANCE ////
 
         // binding map to view models
-        protected Dictionary<string,List<ViewModel>> BindingMap { get; set; } = new Dictionary<string, List<ViewModel>>();
+        internal Dictionary<string,List<ViewModel>> BindingMap { get; set; } = new Dictionary<string, List<ViewModel>>();
         // binding map to components
         protected Dictionary<string,Component> ComponentMap { get; set; } = new Dictionary<string, Component>();
         public Component MainComponent { get; private set; }
@@ -1478,8 +1608,15 @@ namespace Kuuasema.DataBinding {
 
                     bool isList = typeof(IList).IsAssignableFrom(field.FieldType);
                     bool isViewModel = !isList && typeof(ViewModel).IsAssignableFrom(field.FieldType);
+                    bool isBindings = !isList && !isViewModel && typeof(ViewBindings).IsAssignableFrom(field.FieldType);
 
-                    if (!isList && !isViewModel) {
+                    if (isBindings) {
+                        ViewBindings viewBindings = field.GetValue(this) as ViewBindings;
+                        if (viewBindings != null) {
+                            viewBindings.BuildView(this, null);
+                        }
+
+                    } else if (!isList && !isViewModel) {
 
                         // field is not a view model, so try find the component on it
                         Component component = field.GetValue(this) as Component;
@@ -1700,12 +1837,11 @@ namespace Kuuasema.DataBinding {
             this.DataModel.OnValueUpdated += this.OnValueUpdated;
             foreach (KeyValuePair<string,List<ViewModel>> keyVal in this.BindingMap) {
                 string bindingContext = keyVal.Key;
-                if (bindingContext == "Attributes.Something") {
-                    Debug.Log("break");
-                }
+                List<ViewModel> boundViews = keyVal.Value;
+                if (boundViews == null || boundViews.Count == 0) continue;
+
                 DataModel data = this.DataModel.Find(bindingContext);
                 if (data != null) {
-                    List<ViewModel> boundViews = keyVal.Value;
                     foreach (ViewModel view in boundViews) {
                         view.BindData(data);
                     }
