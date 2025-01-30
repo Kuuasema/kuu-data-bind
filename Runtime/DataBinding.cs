@@ -1833,6 +1833,9 @@ namespace Kuuasema.DataBinding {
         }
 
         public virtual void BindData(K dataModel) {
+            if (!this.IsBuilt) {
+                this.BuildView();
+            }
             this.DataModel = dataModel;
             this.DataModel.OnValueUpdated += this.OnValueUpdated;
             foreach (KeyValuePair<string,List<ViewModel>> keyVal in this.BindingMap) {
