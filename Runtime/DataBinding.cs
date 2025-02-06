@@ -2115,6 +2115,7 @@ namespace Kuuasema.DataBinding {
                     element.BuildView();
                 }
             }
+            element.transform.SetAsLastSibling();
             element.gameObject.SetActive(true);
             this.ActiveList.Add(element);
             return element;
