@@ -560,10 +560,18 @@ namespace Kuuasema.DataBinding {
         public virtual void ParseValue(string value) { }
         // for collection support
         public virtual DataModel AddValue(object value) { return null; }
+        public virtual void AddModel(DataModel model) { }
         public virtual void RemoveValue(object value) { }
+        public virtual void RemoveModel(DataModel model) { 
+            this.RemoveModel(model, false);
+        }
+        public virtual void RemoveModel(DataModel model, bool recycleModel) { }
         public virtual void SetValueAt(int index, object value) { }
         public virtual object GetValueAt(int index) { return null; }
         public virtual DataModel GetModelAt(int index) { return null; }
+        public virtual bool ContainsModel(DataModel model) { return false; }
+
+        
         
         
         // The data model can be locked to gain priviledged access to modifying it
@@ -773,22 +781,9 @@ namespace Kuuasema.DataBinding {
         public ElementAdd OnElementAdded { get; set; }
         public override DataModel AddValue(object value) { 
             if (this.IsList) {
-                if (this.Value == null) {
-                    Type _listType = GetGenericList(this.CollectionElementType);
-                    Type _poolType = GetGenericPool(_listType);
-                    this.Value = (T) _poolType.GetMethod("Get").Invoke(null, null);
-                }
-                IList list = this.Value as IList;
-                list.Add(value);
-                
                 DataModel _model = this.CollectionModelPoolType.GetMethod("Get").Invoke(null, null) as DataModel;
-                
                 _model.Bind(value, this);
-                this.ModelList.Add(_model);
-
-                if (this.OnElementAdded != null) {
-                    this.OnElementAdded(value);
-                }
+                this.AddModel(_model);
                 return _model;
             } else if (this.DataType.IsPrimitive) {
                 if (this.DataType == typeof(int)) {
@@ -801,6 +796,25 @@ namespace Kuuasema.DataBinding {
         }
 
         /**
+        * Adding a model to the collection.
+        */
+        public override void AddModel(DataModel model) { 
+            if (this.IsList) {
+                if (this.Value == null) {
+                    Type _listType = GetGenericList(this.CollectionElementType);
+                    Type _poolType = GetGenericPool(_listType);
+                    this.Value = (T) _poolType.GetMethod("Get").Invoke(null, null);
+                }
+                IList list = this.Value as IList;
+                list.Add(model.GetValue());
+                this.ModelList.Add(model);
+                if (this.OnElementAdded != null) {
+                    this.OnElementAdded(model.GetValue());
+                }
+            }
+        }
+
+        /**
         * Removing an element from the collection.
         */
         public delegate void ElementRemove(object value);
@@ -810,14 +824,8 @@ namespace Kuuasema.DataBinding {
                 IList list = this.Value as IList;
                 int index = list.IndexOf(value);
                 if (index > -1) {
-                    list.Remove(value);
-                    object _model = this.ModelList[index];
-                    this.ModelList.RemoveAt(index);
-                    objectArgs[0] = _model;
-                    this.CollectionModelPoolType.GetMethod("Recycle").Invoke(null, objectArgs);
-                    if (this.OnElementRemoved != null) {
-                        this.OnElementRemoved(value);
-                    }
+                    DataModel _model = this.ModelList[index] as DataModel;
+                    this.RemoveModel(_model, true);
                 }
             } else if (this.DataType.IsPrimitive) {
                 if (this.DataType == typeof(int)) {
@@ -826,6 +834,38 @@ namespace Kuuasema.DataBinding {
                     this.SetValue((float)(object)this.Value - (float) value);
                 }
             }
+        }
+
+        /**
+        * Removing a model from the collection.
+        */
+        public override void RemoveModel(DataModel model, bool recycleModel) {
+            if (this.IsList) {
+                int index = this.ModelList.IndexOf(model);
+                if (index > -1) {
+                    IList list = this.Value as IList;    
+                    object value = list[index];
+                    list.RemoveAt(index);
+                    this.ModelList.RemoveAt(index);
+                    objectArgs[0] = model;
+                    if (recycleModel) {
+                        this.CollectionModelPoolType.GetMethod("Recycle").Invoke(null, objectArgs);
+                    }
+                    if (this.OnElementRemoved != null) {
+                        this.OnElementRemoved(value);
+                    }
+                }
+            }
+        }
+
+        /**
+        * Removing a model from the collection.
+        */
+        public override bool ContainsModel(DataModel model) { 
+            if (this.IsList) {
+                return this.ModelList.Contains(model);
+            }
+            return false;
         }
 
         /**
@@ -1923,18 +1963,23 @@ namespace Kuuasema.DataBinding {
             
         }
     }
-    public class ListViewModel<T> : ListViewModel<T,DataModel<T>,ViewModel<T>> {}
-    public class ListViewModel<T,U,K> : ViewModel<List<T>> where U : DataModel<T> where K : ViewModel<T,U> {
 
+    /**
+    * ViewModel for lists. 
+    * The ElementPrefab is dynamically spawned and removed as the contents of the list changes.
+    * Can be used as a generic spawner of game objects, or to manage dynamic UI lists.
+    */
+    public class ListViewModel<T> : ViewModel<List<T>> {
         [ViewBind]
-        public K ElementPrefab;
+        public ViewModel ElementPrefab;
+
         public AssetReferenceGameObject ElementAssetReference;
         private bool loadingAsset;
         private bool buildViewOnLoaded;
 
-        protected Dictionary<T,K> DataElementMap { get; private set; } //= new Dictionary<T,K>();
-        protected List<K> ActiveList { get; private set; } //= new List<K>();
-        protected Queue<K> InactiveQueue { get; private set; } //= new List<K>();
+        protected Dictionary<T,ViewModel> DataElementMap { get; private set; } //= new Dictionary<T,K>();
+        protected List<ViewModel> ActiveList { get; private set; } //= new List<K>();
+        protected Queue<ViewModel> InactiveQueue { get; private set; } //= new List<K>();
 
         private bool collectionsInitialized;
 
@@ -1946,7 +1991,7 @@ namespace Kuuasema.DataBinding {
                 AsyncOperationHandle<GameObject> asyncOp = this.ElementAssetReference.InstantiateAsync(this.transform); 
                 asyncOp.Completed += (op) => {
                     this.loadingAsset = false;
-                    this.ElementPrefab = op.Result.GetComponent<K>();
+                    this.ElementPrefab = op.Result.GetComponent<ViewModel>();
                     this.ElementPrefab.gameObject.SetActive(false);
                     this.ElementPrefab.gameObject.name = "ElementPrefab";
                     if (this.buildViewOnLoaded) {
@@ -1959,19 +2004,19 @@ namespace Kuuasema.DataBinding {
         private void InitializeCollections() {
             if (this.collectionsInitialized) return;
             this.collectionsInitialized = true;
-            this.DataElementMap = GenericPool<Dictionary<T,K>>.Get();
-            this.ActiveList = GenericPool<List<K>>.Get();
-            this.InactiveQueue = GenericPool<Queue<K>>.Get();
+            this.DataElementMap = GenericPool<Dictionary<T,ViewModel>>.Get();
+            this.ActiveList = GenericPool<List<ViewModel>>.Get();
+            this.InactiveQueue = GenericPool<Queue<ViewModel>>.Get();
         }
 
         protected override void OnDestroy() {
             base.OnDestroy();
             this.DataElementMap.Clear();
-            GenericPool<Dictionary<T,K>>.Recycle(this.DataElementMap);
+            GenericPool<Dictionary<T,ViewModel>>.Recycle(this.DataElementMap);
             this.ActiveList.Clear();
-            GenericPool<List<K>>.Recycle(this.ActiveList);
+            GenericPool<List<ViewModel>>.Recycle(this.ActiveList);
             this.InactiveQueue.Clear();
-            GenericPool<Queue<K>>.Recycle(this.InactiveQueue);
+            GenericPool<Queue<ViewModel>>.Recycle(this.InactiveQueue);
 
             if (this.ElementAssetReference != null && this.ElementAssetReference.Asset != null) {
                 this.ElementAssetReference.ReleaseAsset();
@@ -1995,9 +2040,9 @@ namespace Kuuasema.DataBinding {
             }
             this.SetElementCount(count);
             for (int i = 0; i < count; i++) {
-                U datamodel = this.DataModel.GetModelAt(i) as U;
+                DataModel datamodel = this.DataModel.GetModelAt(i) as DataModel;
                 this.ActiveList[i].BindData(datamodel);
-                this.DataElementMap[datamodel.Value] = this.ActiveList[i];
+                this.DataElementMap[(T)datamodel.GetValue()] = this.ActiveList[i];
             }
         }
 
@@ -2034,19 +2079,19 @@ namespace Kuuasema.DataBinding {
 
         protected virtual void OnElementAdded(T data) {
             if (this.loadingAsset) return;
-            K element = this.ActivateElement();
+            ViewModel element = this.ActivateElement();
             this.DataElementMap[data] = element;
             element.BindData(this.DataModel.GetModelAt(this.DataModel.ModelList.Count - 1));
         }
 
         protected virtual void OnElementRemoved(T data) {
-            if (this.DataElementMap.TryGetValue(data, out K element)) {
+            if (this.DataElementMap.TryGetValue(data, out ViewModel element)) {
                 this.DeactivateElement(element);
             }
         }
 
         protected virtual void OnElementUpdated(int index, T data) {
-            if (this.DataElementMap.TryGetValue(data, out K element)) {
+            if (this.DataElementMap.TryGetValue(data, out ViewModel element)) {
                 element.BindData(this.DataModel.GetModelAt(index));
             }
         }
@@ -2060,12 +2105,12 @@ namespace Kuuasema.DataBinding {
             }
         }
 
-        protected K ActivateElement() {
-            K element;
+        protected ViewModel ActivateElement() {
+            ViewModel element;
             if (this.InactiveQueue.Count > 0) {
                 element = this.InactiveQueue.Dequeue();
             } else {
-                element = Instantiate(this.ElementPrefab.gameObject, this.transform).GetComponent<K>();
+                element = Instantiate(this.ElementPrefab.gameObject, this.transform).GetComponent<ViewModel>();
                 if (!element.IsBuilt) {
                     element.BuildView();
                 }
@@ -2075,11 +2120,182 @@ namespace Kuuasema.DataBinding {
             return element;
         }
 
-        protected void DeactivateElement(K element) {
+        protected void DeactivateElement(ViewModel element) {
             element.gameObject.SetActive(false);
             this.ActiveList.Remove(element);
             this.InactiveQueue.Enqueue(element);
-            this.DataElementMap.Remove(element.DataModel.Value);
+            this.DataElementMap.Remove((T)element.GetDataModel().GetValue());
         }
+    }
+
+    /**
+    * More constrained version of the ListViewModel.
+    */
+    public class ListViewModel<T,U> : ListViewModel<T> where U : DataModel<T> {
+
+    }
+
+    /**
+    * Even more constrained version of the ListViewModel, 
+    * with constrains even on the underlying ViewModel used for spawning.
+    */
+    public class ListViewModel<T,U,K> : ListViewModel<T,U> where U : DataModel<T> where K : ViewModel<T,U> {
+
+        // [ViewBind]
+        // public K ElementPrefab;
+
+        // public AssetReferenceGameObject ElementAssetReference;
+        // private bool loadingAsset;
+        // private bool buildViewOnLoaded;
+
+        // protected Dictionary<T,K> DataElementMap { get; private set; } //= new Dictionary<T,K>();
+        // protected List<K> ActiveList { get; private set; } //= new List<K>();
+        // protected Queue<K> InactiveQueue { get; private set; } //= new List<K>();
+
+        // private bool collectionsInitialized;
+
+        // protected override void Awake() {
+        //     base.Awake();
+        //     this.InitializeCollections();
+        //     if (this.ElementPrefab == null && this.ElementAssetReference != null) {
+        //         this.loadingAsset = true;
+        //         AsyncOperationHandle<GameObject> asyncOp = this.ElementAssetReference.InstantiateAsync(this.transform); 
+        //         asyncOp.Completed += (op) => {
+        //             this.loadingAsset = false;
+        //             this.ElementPrefab = op.Result.GetComponent<K>();
+        //             this.ElementPrefab.gameObject.SetActive(false);
+        //             this.ElementPrefab.gameObject.name = "ElementPrefab";
+        //             if (this.buildViewOnLoaded) {
+        //                 this.BuildList();
+        //             }
+        //         };
+        //     }
+        // }
+
+        // private void InitializeCollections() {
+        //     if (this.collectionsInitialized) return;
+        //     this.collectionsInitialized = true;
+        //     this.DataElementMap = GenericPool<Dictionary<T,K>>.Get();
+        //     this.ActiveList = GenericPool<List<K>>.Get();
+        //     this.InactiveQueue = GenericPool<Queue<K>>.Get();
+        // }
+
+        // protected override void OnDestroy() {
+        //     base.OnDestroy();
+        //     this.DataElementMap.Clear();
+        //     GenericPool<Dictionary<T,K>>.Recycle(this.DataElementMap);
+        //     this.ActiveList.Clear();
+        //     GenericPool<List<K>>.Recycle(this.ActiveList);
+        //     this.InactiveQueue.Clear();
+        //     GenericPool<Queue<K>>.Recycle(this.InactiveQueue);
+
+        //     if (this.ElementAssetReference != null && this.ElementAssetReference.Asset != null) {
+        //         this.ElementAssetReference.ReleaseAsset();
+        //     }
+        // }
+
+        // protected override void SetupView() { 
+        //     this.InitializeCollections();
+        //     if (this.loadingAsset) {
+        //         this.buildViewOnLoaded = true;
+        //     } else {
+        //         this.BuildList();    
+        //     }
+        // }
+
+        // protected virtual void BuildList() {
+        //     this.buildViewOnLoaded = false;
+        //     int count = 0;
+        //     if (this.DataModel.Value != null) {
+        //         count = this.DataModel.Value.Count;
+        //     }
+        //     this.SetElementCount(count);
+        //     for (int i = 0; i < count; i++) {
+        //         U datamodel = this.DataModel.GetModelAt(i) as U;
+        //         this.ActiveList[i].BindData(datamodel);
+        //         this.DataElementMap[datamodel.Value] = this.ActiveList[i];
+        //     }
+        // }
+
+        // public override void BindData(DataModel<List<T>> dataModel) {
+        //     base.BindData(dataModel);
+        //     this.DataModel.OnElementAdded += this.OnElementAdded;
+        //     this.DataModel.OnElementRemoved += this.OnElementRemoved;
+        //     this.DataModel.OnElementUpdated += this.OnElementUpdated;
+        // }
+
+        // public override void UnBindData() {
+        //     if (this.DataModel == null) return;
+        //     this.DataModel.OnElementAdded -= this.OnElementAdded;
+        //     this.DataModel.OnElementRemoved -= this.OnElementRemoved;
+        //     this.DataModel.OnElementUpdated -= this.OnElementUpdated;
+        //     base.UnBindData();
+        // }
+
+        // protected override void OnValueUpdated(List<T> value) {
+        //     this.BuildList();
+        // }
+
+        // protected virtual void OnElementAdded(object data) {
+        //     this.OnElementAdded((T)data);
+        // }
+
+        // protected virtual void OnElementRemoved(object data) {
+        //     this.OnElementRemoved((T)data);
+        // }
+
+        // protected virtual void OnElementUpdated(int index, object data) {
+        //     this.OnElementUpdated(index, (T)data);
+        // }
+
+        // protected virtual void OnElementAdded(T data) {
+        //     if (this.loadingAsset) return;
+        //     K element = this.ActivateElement();
+        //     this.DataElementMap[data] = element;
+        //     element.BindData(this.DataModel.GetModelAt(this.DataModel.ModelList.Count - 1));
+        // }
+
+        // protected virtual void OnElementRemoved(T data) {
+        //     if (this.DataElementMap.TryGetValue(data, out K element)) {
+        //         this.DeactivateElement(element);
+        //     }
+        // }
+
+        // protected virtual void OnElementUpdated(int index, T data) {
+        //     if (this.DataElementMap.TryGetValue(data, out K element)) {
+        //         element.BindData(this.DataModel.GetModelAt(index));
+        //     }
+        // }
+
+        // protected virtual void SetElementCount(int count) {
+        //     while (this.ActiveList.Count < count) {
+        //         this.ActivateElement();
+        //     }
+        //     while (this.ActiveList.Count > count) {
+        //         this.DeactivateElement(this.ActiveList[^1]);
+        //     }
+        // }
+
+        // protected K ActivateElement() {
+        //     K element;
+        //     if (this.InactiveQueue.Count > 0) {
+        //         element = this.InactiveQueue.Dequeue();
+        //     } else {
+        //         element = Instantiate(this.ElementPrefab.gameObject, this.transform).GetComponent<K>();
+        //         if (!element.IsBuilt) {
+        //             element.BuildView();
+        //         }
+        //     }
+        //     element.gameObject.SetActive(true);
+        //     this.ActiveList.Add(element);
+        //     return element;
+        // }
+
+        // protected void DeactivateElement(K element) {
+        //     element.gameObject.SetActive(false);
+        //     this.ActiveList.Remove(element);
+        //     this.InactiveQueue.Enqueue(element);
+        //     this.DataElementMap.Remove(element.DataModel.Value);
+        // }
     }
 }
